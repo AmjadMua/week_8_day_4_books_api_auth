@@ -16,14 +16,18 @@ router.get("/", async (req, res) => {
 // get one book
 router.get("/:id", async (req, res) => {
   const id = req.params.id
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json("Id shoud be an id object type")
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json("Id shoud be an id object type")
+    }
+    const book = await Book.findById(id).populate({
+      path: "owner",
+      select: "-password -__v",
+    })
+    res.json(book)
+  } catch (error) {
+    res.status(500).json(error.message)
   }
-  const book = await Book.findById(id).populate({
-    path: "owner",
-    select: "-password -__v",
-  })
-  res.json(book)
 })
 
 // add book
@@ -45,10 +49,10 @@ router.post("/", CheckToken, async (req, res) => {
 // edit book
 router.put("/:id", CheckToken, async (req, res) => {
   const id = req.params.id
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json("Id shoud be an id object type")
-  }
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json("Id shoud be an id object type")
+    }
     const { title, description, image, author } = req.body
     const book = await Book.findByIdAndUpdate(
       id,
